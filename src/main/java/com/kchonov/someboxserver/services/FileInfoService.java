@@ -3,8 +3,6 @@ package com.kchonov.someboxserver.services;
 import com.kchonov.someboxserver.config.SomeBoxConfig;
 import com.kchonov.someboxserver.entities.SomeBoxFileInfo;
 import com.kchonov.someboxserver.utilities.FileUtilities;
-import org.apache.commons.lang3.time.DurationFormatUtils;
-import org.bytedeco.javacv.FFmpegFrameGrabber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -31,13 +29,13 @@ public class FileInfoService {
             String screenshotPath = Paths.get(someBoxConfig.screenshotDir(), screenshotFilename).toString();
             FileUtilities.takeScreenshot(path.toString(), screenshotPath, someBoxConfig.screenshotWidth(), someBoxConfig.screenshotHeight());
         }
-        String screenshot = FileUtilities.hasScreenshot(screenshotFilename) ? screenshotFilename : "";
+        // String screenshot = FileUtilities.hasScreenshot(screenshotFilename) ? screenshotFilename : "";
 
         return new SomeBoxFileInfo(
                 0L, // will be populated by database
                 strippedFilename,
                 filename,
-                screenshot,
+                screenshotFilename,
                 FileUtilities.getFileDuration(path.toString()),
                 FileUtilities.getFileDurationString(path.toString()),
                 0L

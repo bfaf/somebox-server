@@ -1,22 +1,21 @@
 package com.kchonov.someboxserver.services;
 
 import com.kchonov.someboxserver.config.SomeBoxConfig;
+import com.kchonov.someboxserver.entities.BasicSomeBoxFileInfo;
 import com.kchonov.someboxserver.entities.SomeBoxFileInfo;
 import com.kchonov.someboxserver.exceptions.VideoNotFoundException;
 import com.kchonov.someboxserver.utilities.FileUtilities;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.RandomAccessFile;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -58,99 +57,104 @@ public class FilesService {
         return this.fileInfoList;
     }
 
-    public ResponseEntity<StreamingResponseBody> streamFile(int videoId, String rangeHeader) {
+    public List<BasicSomeBoxFileInfo> listBasicFiles() {
+        List<String> files = Stream.of(new File(someBoxConfig.sourceDir()).listFiles())
+                .filter(file -> !file.isDirectory())
+                .filter(file -> FILE_FORMATS.containsKey(FileUtilities.getExtension(file.getName())))
+                .map(File::getName)
+                .collect(Collectors.toList());
+
+        List<BasicSomeBoxFileInfo> basicList = files.stream().map(file -> new BasicSomeBoxFileInfo(0L, file)).collect(Collectors.toList());
+        for (int i = 0; i < basicList.size(); i++) {
+            basicList.get(i).setId(Long.valueOf(i));
+        }
+
+        return basicList;
+    }
+
+    public ResponseEntity<byte[]> getImage(Integer imageId) throws IOException {
         if (this.fileInfoList == null) {
             listFiles();
         }
-        if (videoId < 0 || videoId >= fileInfoList.size())
+        if (imageId < 0 || imageId >= fileInfoList.size())
+        {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Cannot find image with id: " + imageId);
+        }
+        // logger.info("Fetching image: " + imageId);
+        Path path = Paths.get(someBoxConfig.sourceDir(), this.fileInfoList.get(imageId).getScreenshotName());
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Content-Type", MediaType.IMAGE_PNG_VALUE);
+        InputStream initialStream = new FileInputStream(new File(path.toString()));
+        byte[] media = IOUtils.toByteArray(initialStream);
+        headers.setCacheControl(CacheControl.noCache().getHeaderValue());
+
+        ResponseEntity<byte[]> responseEntity = new ResponseEntity<>(media, headers, HttpStatus.OK);
+        return responseEntity;
+    }
+
+    public void streamFile(int videoId, HttpServletRequest request, HttpServletResponse response) throws Exception {
+        List<BasicSomeBoxFileInfo> basicList = listBasicFiles();
+        if (videoId < 0 || videoId >= basicList.size())
         {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Cannot find video with id: " + videoId);
         }
-        try
-        {
-            Path path = Paths.get(someBoxConfig.sourceDir(), this.fileInfoList.get(videoId).getOriginalFilename());
-            StreamingResponseBody responseStream;
-            String filePathString = path.toString();
-            Path filePath = Paths.get(filePathString);
-            Long fileSize = Files.size(filePath);
-            byte[] buffer = new byte[1024];
-            final HttpHeaders responseHeaders = new HttpHeaders();
+        Path path = Paths.get(someBoxConfig.sourceDir(), basicList.get(videoId).getOriginalFilename());
+        String filePathString = path.toString();
+        final String mimeType = Files.probeContentType(path);
+        final File movieFIle = new File(filePathString);
+        final RandomAccessFile randomFile = new RandomAccessFile(movieFIle, "r");
 
-            if (rangeHeader == null)
-            {
-                responseHeaders.add("Content-Type", "video/mp4");
-                responseHeaders.add("Content-Length", fileSize.toString());
-                responseStream = os -> {
-                    RandomAccessFile file = new RandomAccessFile(filePathString, "r");
-                    try (file)
-                    {
-                        long pos = 0;
-                        file.seek(pos);
-                        while (pos < fileSize - 1)
-                        {
-                            file.read(buffer);
-                            os.write(buffer);
-                            pos += buffer.length;
-                        }
-                        os.flush();
-                    } catch (Exception e) {}
-                };
+        long rangeStart = 0;
+        long rangeEnd = 0;
+        boolean isPart = false;
 
-                return new ResponseEntity<StreamingResponseBody>
-                        (responseStream, responseHeaders, HttpStatus.OK);
-            }
+        try {
+            long movieSize = randomFile.length();
+            String range = request.getHeader("range");
+            // logger.debug("range: {}", range);
 
-            String[] ranges = rangeHeader.split("-");
-            Long rangeStart = Long.parseLong(ranges[0].substring(6));
-            Long rangeEnd;
-            if (ranges.length > 1)
-            {
-                rangeEnd = Long.parseLong(ranges[1]);
-            }
-            else
-            {
-                rangeEnd = fileSize - 1;
-            }
-
-            if (fileSize < rangeEnd)
-            {
-                rangeEnd = fileSize - 1;
-            }
-
-            String contentLength = String.valueOf((rangeEnd - rangeStart) + 1);
-            responseHeaders.add("Content-Type", "video/mp4");
-            responseHeaders.add("Content-Length", contentLength);
-            responseHeaders.add("Accept-Ranges", "bytes");
-            responseHeaders.add("Content-Range", "bytes" + " " +
-                    rangeStart + "-" + rangeEnd + "/" + fileSize);
-            final Long _rangeEnd = rangeEnd;
-            responseStream = os -> {
-                RandomAccessFile file = new RandomAccessFile(filePathString, "r");
-                try (file)
-                {
-                    long pos = rangeStart;
-                    file.seek(pos);
-                    while (pos < _rangeEnd)
-                    {
-                        file.read(buffer);
-                        os.write(buffer);
-                        pos += buffer.length;
-                    }
-                    os.flush();
+            if (range != null) {
+                if (range.endsWith("-")) {
+                    range = range + (movieSize - 1);
                 }
-                catch (Exception e) {}
-            };
+                int idxm = range.trim().indexOf("-");
+                rangeStart = Long.parseLong(range.substring(6, idxm));
+                rangeEnd = Long.parseLong(range.substring(idxm + 1));
+                if (rangeStart > 0) {
+                    isPart = true;
+                }
+            } else {
+                rangeStart = 0;
+                rangeEnd = movieSize - 1;
+            }
 
-            return new ResponseEntity<StreamingResponseBody>
-                    (responseStream, responseHeaders, HttpStatus.PARTIAL_CONTENT);
-        }
-        catch (FileNotFoundException e)
-        {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-        catch (IOException e)
-        {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+            long partSize = rangeEnd - rangeStart + 1;
+            // logger.debug("accepted range: {}", rangeStart + "-" + rangeEnd + "/" + partSize + " isPart:" + isPart);
+
+            response.reset();
+            response.setStatus(isPart ? 206 : 200);
+            response.setContentType(mimeType);
+
+            response.setHeader("Content-Range", "bytes " + rangeStart + "-" + rangeEnd + "/" + movieSize);
+            response.setHeader("Accept-Ranges", "bytes");
+            response.setHeader("Content-Length", "" + partSize);
+
+            OutputStream out = response.getOutputStream();
+            randomFile.seek(rangeStart);
+
+            int bufferSize = 8 * 1024;
+            byte[] buf = new byte[bufferSize];
+            do {
+                int block = partSize > bufferSize ? bufferSize : (int) partSize;
+                int len = randomFile.read(buf, 0, block);
+                out.write(buf, 0, len);
+                partSize -= block;
+            } while (partSize > 0);
+            // logger.debug("sent " + movieFIle.getAbsolutePath() + " " + rangeStart + "-" + rangeEnd);
+        } catch (IOException e) {
+            logger.error("Transfer was aborted", e);
+        } finally {
+            randomFile.close();
         }
     }
 }
