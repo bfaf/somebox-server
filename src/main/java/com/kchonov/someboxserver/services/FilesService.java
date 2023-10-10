@@ -30,7 +30,7 @@ public class FilesService {
 
     Logger logger = LoggerFactory.getLogger(FilesService.class);
 
-    private final Map<String, Boolean> FILE_FORMATS = Map.of(".mp4", true, ".mkv", true);
+    private final Map<String, Boolean> FILE_FORMATS = Map.of(".lzma", true);
 
     private final SomeBoxConfig someBoxConfig;
     private final FileInfoService fileInfoService;
@@ -63,6 +63,8 @@ public class FilesService {
                 .filter(file -> FILE_FORMATS.containsKey(FileUtilities.getExtension(file.getName())))
                 .map(File::getName)
                 .collect(Collectors.toList());
+        logger.info(files.get(0).toString());
+        logger.info("Size: {}", files.size());
 
         List<BasicSomeBoxFileInfo> basicList = files.stream().map(file -> new BasicSomeBoxFileInfo(0L, file)).collect(Collectors.toList());
         for (int i = 0; i < basicList.size(); i++) {
