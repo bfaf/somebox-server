@@ -37,6 +37,8 @@ public class FilesService {
 
     private List<SomeBoxFileInfo> fileInfoList;
 
+    private List<BasicSomeBoxFileInfo> basicList;
+
     public FilesService(SomeBoxConfig someBoxConfig, FileInfoService fileInfoService) {
         this.someBoxConfig = someBoxConfig;
         this.fileInfoService = fileInfoService;
@@ -63,8 +65,6 @@ public class FilesService {
                 .filter(file -> FILE_FORMATS.containsKey(FileUtilities.getExtension(file.getName())))
                 .map(File::getName)
                 .collect(Collectors.toList());
-        logger.info(files.get(0).toString());
-        logger.info("Size: {}", files.size());
 
         List<BasicSomeBoxFileInfo> basicList = files.stream().map(file -> new BasicSomeBoxFileInfo(0L, file)).collect(Collectors.toList());
         for (int i = 0; i < basicList.size(); i++) {
@@ -95,12 +95,14 @@ public class FilesService {
     }
 
     public void streamFile(int videoId, HttpServletRequest request, HttpServletResponse response) throws Exception {
-        List<BasicSomeBoxFileInfo> basicList = listBasicFiles();
-        if (videoId < 0 || videoId >= basicList.size())
+        if (basicList == null) {
+            this.basicList = listBasicFiles();
+        }
+        if (videoId < 0 || videoId >= this.basicList.size())
         {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Cannot find video with id: " + videoId);
         }
-        Path path = Paths.get(someBoxConfig.sourceDir(), basicList.get(videoId).getOriginalFilename());
+        Path path = Paths.get(someBoxConfig.sourceDir(), this.basicList.get(videoId).getOriginalFilename());
         String filePathString = path.toString();
         final String mimeType = Files.probeContentType(path);
         final File movieFIle = new File(filePathString);
