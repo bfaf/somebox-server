@@ -35,6 +35,7 @@ public class ApiController {
     }
 
     @GetMapping("/api/v1/list")
+//    @CrossOrigin(origins = "http://0.0.0.0:8080")
     public List<SomeBoxFileInfo> listFiles() {
         return filesService.listFiles();
     }
@@ -56,19 +57,20 @@ public class ApiController {
     @GetMapping(value = "/api/v1/play/{id}")
     public void playMediaV01(
             @PathVariable("id")
-            Integer videoId,
+            String filename,
             HttpServletResponse response,
             HttpServletRequest request)
     {
+        logger.info("Requested to play video: {}", filename);
         try {
-            filesService.streamFile(videoId, request, response);
+            filesService.streamFile(filename, request, response);
         } catch (Exception ex) {
             logger.error("Exception in API: ", ex);
         }
     }
 
     @GetMapping("/api/v1/image/{id}")
-    public ResponseEntity<byte[]> getImageAsResponseEntity(@PathVariable("id") Integer imageId) throws IOException {
-        return filesService.getImage(imageId);
+    public ResponseEntity<byte[]> getImageAsResponseEntity(@PathVariable("id") String movieFilename) throws IOException {
+        return filesService.getImage(movieFilename);
     }
 }

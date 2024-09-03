@@ -37,12 +37,24 @@ public class FilesService {
 
     private List<SomeBoxFileInfo> fileInfoList;
 
+    private List<BasicSomeBoxFileInfo> basicList;
+
+    private List<String> errorsToIgnore = List.of(
+            "java.io.IOException: An established connection was aborted by the software in your host machine",
+            "java.io.IOException: Connection reset by peer"
+    );
+
     public FilesService(SomeBoxConfig someBoxConfig, FileInfoService fileInfoService) {
         this.someBoxConfig = someBoxConfig;
         this.fileInfoService = fileInfoService;
+        this.fileInfoList = listFiles();
+        this.basicList = listBasicFiles();
     }
 
     public List<SomeBoxFileInfo> listFiles() {
+        if (this.fileInfoList != null) {
+            return this.fileInfoList;
+        }
         List<String> files = Stream.of(new File(someBoxConfig.sourceDir()).listFiles())
                 .filter(file -> !file.isDirectory())
                 .filter(file -> FILE_FORMATS.containsKey(FileUtilities.getExtension(file.getName())))
@@ -72,16 +84,20 @@ public class FilesService {
         return basicList;
     }
 
-    public ResponseEntity<byte[]> getImage(Integer imageId) throws IOException {
+    public ResponseEntity<byte[]> getImage(String movieFilename) throws IOException {
+//        logger.info("Fetching image: " + movieFilename);
         if (this.fileInfoList == null) {
             listFiles();
         }
-        if (imageId < 0 || imageId >= fileInfoList.size())
-        {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Cannot find image with id: " + imageId);
+        List<SomeBoxFileInfo> filenameList = this.fileInfoList.stream().filter(f -> f.getFilename().compareTo(movieFilename) == 0
+        ).collect(Collectors.toList());
+//        logger.info("Images matching: " + filenameList.size());
+        if (filenameList.size() == 0) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Cannot find requested video");
         }
-        // logger.info("Fetching image: " + imageId);
-        Path path = Paths.get(someBoxConfig.sourceDir(), this.fileInfoList.get(imageId).getScreenshotName());
+
+        Path path = Paths.get(someBoxConfig.screenshotDir(), filenameList.get(0).getScreenshotName());
+//        logger.info("Fetching image: " + path.getFileName());
         HttpHeaders headers = new HttpHeaders();
         headers.add("Content-Type", MediaType.IMAGE_PNG_VALUE);
         InputStream initialStream = new FileInputStream(new File(path.toString()));
@@ -92,13 +108,17 @@ public class FilesService {
         return responseEntity;
     }
 
-    public void streamFile(int videoId, HttpServletRequest request, HttpServletResponse response) throws Exception {
-        List<BasicSomeBoxFileInfo> basicList = listBasicFiles();
-        if (videoId < 0 || videoId >= basicList.size())
-        {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Cannot find video with id: " + videoId);
+    public void streamFile(String filename, HttpServletRequest request, HttpServletResponse response) throws Exception {
+        if (this.fileInfoList == null) {
+            listFiles();
         }
-        Path path = Paths.get(someBoxConfig.sourceDir(), basicList.get(videoId).getOriginalFilename());
+        // Minions 2015 720p BDRip x264 DUAL-SLS
+        List<SomeBoxFileInfo> filenameList = this.fileInfoList.stream().filter(f -> f.getFilename().compareTo(filename) == 0).collect(Collectors.toList());
+        if (filenameList.size() == 0) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Cannot find requested video");
+        }
+        Path path = Paths.get(someBoxConfig.sourceDir(), filenameList.get(0).getOriginalFilename());
+        logger.info("path to file: {}", path.toString());
         String filePathString = path.toString();
         final String mimeType = Files.probeContentType(path);
         final File movieFIle = new File(filePathString);
@@ -111,7 +131,7 @@ public class FilesService {
         try {
             long movieSize = randomFile.length();
             String range = request.getHeader("range");
-            // logger.debug("range: {}", range);
+//             logger.info("range: {}", range);
 
             if (range != null) {
                 if (range.endsWith("-")) {
@@ -142,7 +162,7 @@ public class FilesService {
             OutputStream out = response.getOutputStream();
             randomFile.seek(rangeStart);
 
-            int bufferSize = 8 * 1024;
+            int bufferSize = 16 * 1024;
             byte[] buf = new byte[bufferSize];
             do {
                 int block = partSize > bufferSize ? bufferSize : (int) partSize;
@@ -152,7 +172,9 @@ public class FilesService {
             } while (partSize > 0);
             // logger.debug("sent " + movieFIle.getAbsolutePath() + " " + rangeStart + "-" + rangeEnd);
         } catch (IOException e) {
-            logger.error("Transfer was aborted", e);
+            if (!errorsToIgnore.contains(e.getMessage())) {
+                logger.error("Transfer was aborted", e);
+            }
         } finally {
             randomFile.close();
         }
