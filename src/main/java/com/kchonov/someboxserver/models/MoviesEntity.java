@@ -7,12 +7,14 @@ import java.util.Objects;
 
 @Entity
 @Table(name = "movies", schema = "public", catalog = "postgres")
+@IdClass(MoviesEntityPK.class)
 public class MoviesEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Id
     @Column(name = "movie_id")
     private int movieId;
-    @Basic
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
     @Column(name = "name")
     private String name;
     @Basic

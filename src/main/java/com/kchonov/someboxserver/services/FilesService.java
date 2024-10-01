@@ -95,17 +95,28 @@ public class FilesService {
         if (filenameList.size() == 0) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Cannot find requested video");
         }
+        InputStream initialStream = null;
 
-        Path path = Paths.get(someBoxConfig.screenshotDir(), filenameList.get(0).getScreenshotName());
+        try {
+            Path path = Paths.get(someBoxConfig.screenshotDir(), filenameList.get(0).getScreenshotName());
 //        logger.info("Fetching image: " + path.getFileName());
-        HttpHeaders headers = new HttpHeaders();
-        headers.add("Content-Type", MediaType.IMAGE_PNG_VALUE);
-        InputStream initialStream = new FileInputStream(new File(path.toString()));
-        byte[] media = IOUtils.toByteArray(initialStream);
-        headers.setCacheControl(CacheControl.noCache().getHeaderValue());
+            HttpHeaders headers = new HttpHeaders();
+            headers.add("Content-Type", MediaType.IMAGE_PNG_VALUE);
+            initialStream = new FileInputStream(new File(path.toString()));
+            byte[] media = IOUtils.toByteArray(initialStream);
+            headers.setCacheControl(CacheControl.noCache().getHeaderValue());
 
-        ResponseEntity<byte[]> responseEntity = new ResponseEntity<>(media, headers, HttpStatus.OK);
-        return responseEntity;
+            ResponseEntity<byte[]> responseEntity = new ResponseEntity<>(media, headers, HttpStatus.OK);
+            return responseEntity;
+        } catch (IOException e) {
+            logger.error("Something happened while generating image", e.getMessage());
+            ResponseEntity<byte[]> responseEntity = new ResponseEntity<>(null, null, HttpStatus.INTERNAL_SERVER_ERROR);
+            return responseEntity;
+        } finally {
+            if (initialStream != null) {
+                initialStream.close();
+            }
+        }
     }
 
     public void streamFile(String filename, HttpServletRequest request, HttpServletResponse response) throws Exception {
@@ -118,7 +129,7 @@ public class FilesService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Cannot find requested video");
         }
         Path path = Paths.get(someBoxConfig.sourceDir(), filenameList.get(0).getOriginalFilename());
-        logger.info("path to file: {}", path.toString());
+//        logger.info("path to file: {}", path.toString());
         String filePathString = path.toString();
         final String mimeType = Files.probeContentType(path);
         final File movieFIle = new File(filePathString);

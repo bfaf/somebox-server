@@ -6,15 +6,17 @@ import java.util.Objects;
 
 @Entity
 @Table(name = "movies_metadata", schema = "public", catalog = "postgres")
+@IdClass(MoviesMetadataEntityPK.class)
 public class MoviesMetadataEntity {
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Id
+    @Basic
     @Column(name = "id")
     private int id;
-    @Basic
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
     @Column(name = "movie_id")
-    private Integer movieId;
-    @Basic
+    private int movieId;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
     @Column(name = "name")
     private String name;
     @Basic
@@ -48,6 +50,9 @@ public class MoviesMetadataEntity {
     @Column(name = "skip_intro_at")
     private Long skipIntroAt;
     @Basic
+    @Column(name = "skip_intro_duration")
+    private Long skipIntroDuration;
+    @Basic
     @Column(name = "skip_credits_at")
     private Long skipCreditsAt;
     @Basic
@@ -62,11 +67,11 @@ public class MoviesMetadataEntity {
         this.id = id;
     }
 
-    public Integer getMovieId() {
+    public int getMovieId() {
         return movieId;
     }
 
-    public void setMovieId(Integer movieId) {
+    public void setMovieId(int movieId) {
         this.movieId = movieId;
     }
 
@@ -158,6 +163,14 @@ public class MoviesMetadataEntity {
         this.skipIntroAt = skipIntroAt;
     }
 
+    public Long getSkipIntroDuration() {
+        return skipIntroDuration;
+    }
+
+    public void setSkipIntroDuration(Long skipIntroDuration) {
+        this.skipIntroDuration = skipIntroDuration;
+    }
+
     public Long getSkipCreditsAt() {
         return skipCreditsAt;
     }
@@ -179,11 +192,11 @@ public class MoviesMetadataEntity {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         MoviesMetadataEntity that = (MoviesMetadataEntity) o;
-        return id == that.id && Objects.equals(movieId, that.movieId) && Objects.equals(name, that.name) && Objects.equals(plot, that.plot) && Objects.equals(rating, that.rating) && Objects.equals(duration, that.duration) && Objects.equals(poster, that.poster) && Objects.equals(format, that.format) && Objects.equals(type, that.type) && Objects.equals(releaseYear, that.releaseYear) && Objects.equals(rated, that.rated) && Objects.equals(ganre, that.ganre) && Objects.equals(skipIntroAt, that.skipIntroAt) && Objects.equals(skipCreditsAt, that.skipCreditsAt) && Objects.equals(columnInfo, that.columnInfo);
+        return id == that.id && movieId == that.movieId && Objects.equals(name, that.name) && Objects.equals(plot, that.plot) && Objects.equals(rating, that.rating) && Objects.equals(duration, that.duration) && Objects.equals(poster, that.poster) && Objects.equals(format, that.format) && Objects.equals(type, that.type) && Objects.equals(releaseYear, that.releaseYear) && Objects.equals(rated, that.rated) && Objects.equals(ganre, that.ganre) && Objects.equals(skipIntroAt, that.skipIntroAt) && Objects.equals(skipIntroDuration, that.skipIntroDuration) && Objects.equals(skipCreditsAt, that.skipCreditsAt) && Objects.equals(columnInfo, that.columnInfo);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, movieId, name, plot, rating, duration, poster, format, type, releaseYear, rated, ganre, skipIntroAt, skipCreditsAt, columnInfo);
+        return Objects.hash(id, movieId, name, plot, rating, duration, poster, format, type, releaseYear, rated, ganre, skipIntroAt, skipIntroDuration, skipCreditsAt, columnInfo);
     }
 }
