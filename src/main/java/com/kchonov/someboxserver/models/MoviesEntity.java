@@ -3,26 +3,38 @@ package com.kchonov.someboxserver.models;
 import jakarta.persistence.*;
 
 import java.sql.Timestamp;
+import java.util.Date;
+import java.util.List;
 import java.util.Objects;
 
 @Entity
 @Table(name = "movies", schema = "public", catalog = "postgres")
-@IdClass(MoviesEntityPK.class)
 public class MoviesEntity {
+
+    public MoviesEntity() {}
+    public MoviesEntity(String name, String releaseYear, String filename) {
+        this.name = name;
+        this.releaseYear = releaseYear;
+        this.filename = filename;
+        this.startFrom = 0L;
+        this.published = (short)1;
+        this.createdAt = new Timestamp(new Date().getTime());
+        this.updatedAt = new Timestamp(new Date().getTime());
+    }
+
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Id
     @Column(name = "movie_id")
-    private int movieId;
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Id
+    private Integer movieId;
+    @Basic
     @Column(name = "name")
     private String name;
     @Basic
+    @Column(name = "release_year")
+    private String releaseYear;
+    @Basic
     @Column(name = "filename")
     private String filename;
-    @Basic
-    @Column(name = "human_name")
-    private String humanName;
     @Basic
     @Column(name = "start_from")
     private Long startFrom;
@@ -35,15 +47,18 @@ public class MoviesEntity {
     @Basic
     @Column(name = "updated_at")
     private Timestamp updatedAt;
-    @Basic
-    @Column(name = "for_countries")
-    private String forCountries;
 
-    public int getMovieId() {
+//    @OneToOne
+//    private MoviesMetadataEntity moviesMetadata;
+
+//    @ManyToMany
+//    private List<MovieGanresEntity> movieGanres;
+
+    public Integer getMovieId() {
         return movieId;
     }
 
-    public void setMovieId(int movieId) {
+    public void setMovieId(Integer movieId) {
         this.movieId = movieId;
     }
 
@@ -55,20 +70,20 @@ public class MoviesEntity {
         this.name = name;
     }
 
+    public String getReleaseYear() {
+        return releaseYear;
+    }
+
+    public void setReleaseYear(String releaseYear) {
+        this.releaseYear = releaseYear;
+    }
+
     public String getFilename() {
         return filename;
     }
 
     public void setFilename(String filename) {
         this.filename = filename;
-    }
-
-    public String getHumanName() {
-        return humanName;
-    }
-
-    public void setHumanName(String humanName) {
-        this.humanName = humanName;
     }
 
     public Long getStartFrom() {
@@ -103,24 +118,32 @@ public class MoviesEntity {
         this.updatedAt = updatedAt;
     }
 
-    public String getForCountries() {
-        return forCountries;
-    }
-
-    public void setForCountries(String forCountries) {
-        this.forCountries = forCountries;
-    }
+//    public MoviesMetadataEntity getMoviesMetadataEntity() {
+//        return moviesMetadata;
+//    }
+//
+//    public void setMoviesMetadataEntity(MoviesMetadataEntity moviesMetadataEntity) {
+//        this.moviesMetadata = moviesMetadataEntity;
+//    }
+//
+//    public List<MovieGanresEntity> getMoviesGanres() {
+//        return movieGanres;
+//    }
+//
+//    public void setMoviesGanres(List<MovieGanresEntity> movieGanres) {
+//        this.movieGanres = movieGanres;
+//    }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         MoviesEntity that = (MoviesEntity) o;
-        return movieId == that.movieId && Objects.equals(name, that.name) && Objects.equals(filename, that.filename) && Objects.equals(humanName, that.humanName) && Objects.equals(startFrom, that.startFrom) && Objects.equals(published, that.published) && Objects.equals(createdAt, that.createdAt) && Objects.equals(updatedAt, that.updatedAt) && Objects.equals(forCountries, that.forCountries);
+        return movieId == that.movieId && Objects.equals(name, that.name) && Objects.equals(releaseYear, that.releaseYear) && Objects.equals(filename, that.filename) && Objects.equals(startFrom, that.startFrom) && Objects.equals(published, that.published) && Objects.equals(createdAt, that.createdAt) && Objects.equals(updatedAt, that.updatedAt);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(movieId, name, filename, humanName, startFrom, published, createdAt, updatedAt, forCountries);
+        return Objects.hash(movieId, name, releaseYear, filename, startFrom, published, createdAt, updatedAt);
     }
 }

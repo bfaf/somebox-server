@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<persistence xmlns="https://jakarta.ee/xml/ns/persistence"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="https://jakarta.ee/xml/ns/persistence https://jakarta.ee/xml/ns/persistence/persistence_3_0.xsd"
+             version="3.0">
+  <persistence-unit name="default">
+
+    <class>com.kchonov.someboxserver.models.GanresEntity</class>
+    <class>com.kchonov.someboxserver.models.MovieGanresEntity</class>
+    <class>com.kchonov.someboxserver.models.MovieTypeEntity</class>
+    <class>com.kchonov.someboxserver.models.MoviesEntity</class>
+    <class>com.kchonov.someboxserver.models.MoviesMetadataEntity</class>
+    <class>com.kchonov.someboxserver.models.VideoStandardsEntity</class>
+    <properties>
+      <property name="hibernate.connection.url" value="jdbc:postgresql://localhost:5432/postgres"/>
+      <property name="hibernate.connection.driver_class" value="org.postgresql.Driver"/>
+      <property name="hibernate.connection.username" value="postgres"/>
+      <property name="hibernate.connection.password" value="mysecretpassword"/>
+    </properties>
+  </persistence-unit>
+</persistence>

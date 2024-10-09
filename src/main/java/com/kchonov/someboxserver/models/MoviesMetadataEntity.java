@@ -6,19 +6,14 @@ import java.util.Objects;
 
 @Entity
 @Table(name = "movies_metadata", schema = "public", catalog = "postgres")
-@IdClass(MoviesMetadataEntityPK.class)
 public class MoviesMetadataEntity {
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @Column(name = "movies_metadata_id")
+    private Integer moviesMetadataId;
     @Basic
-    @Column(name = "id")
-    private int id;
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Id
     @Column(name = "movie_id")
-    private int movieId;
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Id
-    @Column(name = "name")
-    private String name;
+    private Integer movieId;
     @Basic
     @Column(name = "plot")
     private String plot;
@@ -34,12 +29,6 @@ public class MoviesMetadataEntity {
     @Basic
     @Column(name = "format")
     private String format;
-    @Basic
-    @Column(name = "type")
-    private String type;
-    @Basic
-    @Column(name = "release_year")
-    private String releaseYear;
     @Basic
     @Column(name = "rated")
     private String rated;
@@ -58,29 +47,42 @@ public class MoviesMetadataEntity {
     @Basic
     @Column(name = "column_info")
     private String columnInfo;
+    @Basic
+    @Column(name = "play_count")
+    private Long playCount;
 
-    public int getId() {
-        return id;
+    public MoviesMetadataEntity() { }
+
+    public MoviesMetadataEntity(Integer movieId, String plot, String rating, Long duration, String poster, String format, String rated, String ganre, Long skipIntroAt, Long skipIntroDuration, Long skipCreditsAt, String columnInfo, Long playCount) {
+        this.movieId = movieId;
+        this.plot = plot;
+        this.rating = rating;
+        this.duration = duration;
+        this.poster = poster;
+        this.format = format;
+        this.rated = rated;
+        this.ganre = ganre;
+        this.skipIntroAt = skipIntroAt;
+        this.skipIntroDuration = skipIntroDuration;
+        this.skipCreditsAt = skipCreditsAt;
+        this.columnInfo = columnInfo;
+        this.playCount = playCount;
     }
 
-    public void setId(int id) {
-        this.id = id;
+    public Integer getMoviesMetadataId() {
+        return moviesMetadataId;
     }
 
-    public int getMovieId() {
+    public void setMoviesMetadataId(Integer moviesMetadataId) {
+        this.moviesMetadataId = moviesMetadataId;
+    }
+
+    public Integer getMovieId() {
         return movieId;
     }
 
-    public void setMovieId(int movieId) {
+    public void setMovieId(Integer movieId) {
         this.movieId = movieId;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     public String getPlot() {
@@ -121,22 +123,6 @@ public class MoviesMetadataEntity {
 
     public void setFormat(String format) {
         this.format = format;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public String getReleaseYear() {
-        return releaseYear;
-    }
-
-    public void setReleaseYear(String releaseYear) {
-        this.releaseYear = releaseYear;
     }
 
     public String getRated() {
@@ -187,16 +173,24 @@ public class MoviesMetadataEntity {
         this.columnInfo = columnInfo;
     }
 
+    public Long getPlayCount() {
+        return playCount;
+    }
+
+    public void setPlayCount(Long playCount) {
+        this.playCount = playCount;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         MoviesMetadataEntity that = (MoviesMetadataEntity) o;
-        return id == that.id && movieId == that.movieId && Objects.equals(name, that.name) && Objects.equals(plot, that.plot) && Objects.equals(rating, that.rating) && Objects.equals(duration, that.duration) && Objects.equals(poster, that.poster) && Objects.equals(format, that.format) && Objects.equals(type, that.type) && Objects.equals(releaseYear, that.releaseYear) && Objects.equals(rated, that.rated) && Objects.equals(ganre, that.ganre) && Objects.equals(skipIntroAt, that.skipIntroAt) && Objects.equals(skipIntroDuration, that.skipIntroDuration) && Objects.equals(skipCreditsAt, that.skipCreditsAt) && Objects.equals(columnInfo, that.columnInfo);
+        return moviesMetadataId == that.moviesMetadataId && Objects.equals(movieId, that.movieId) && Objects.equals(plot, that.plot) && Objects.equals(rating, that.rating) && Objects.equals(duration, that.duration) && Objects.equals(poster, that.poster) && Objects.equals(format, that.format) && Objects.equals(rated, that.rated) && Objects.equals(ganre, that.ganre) && Objects.equals(skipIntroAt, that.skipIntroAt) && Objects.equals(skipIntroDuration, that.skipIntroDuration) && Objects.equals(skipCreditsAt, that.skipCreditsAt) && Objects.equals(columnInfo, that.columnInfo) && Objects.equals(playCount, that.playCount);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, movieId, name, plot, rating, duration, poster, format, type, releaseYear, rated, ganre, skipIntroAt, skipIntroDuration, skipCreditsAt, columnInfo);
+        return Objects.hash(moviesMetadataId, movieId, plot, rating, duration, poster, format, rated, ganre, skipIntroAt, skipIntroDuration, skipCreditsAt, columnInfo, playCount);
     }
 }

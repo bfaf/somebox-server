@@ -8,42 +8,42 @@ import jakarta.persistence.Id;
 import java.io.Serializable;
 import java.util.Objects;
 
-public class MoviesEntityPK implements Serializable {
+public class MovieGanresEntityPK implements Serializable {
     @Column(name = "movie_id")
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int movieId;
-    @Column(name = "name")
+    private Integer movieId;
+    @Column(name = "ganre_id")
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private String name;
+    private Integer ganreId;
 
     public int getMovieId() {
         return movieId;
     }
 
-    public void setMovieId(int movieId) {
+    public void setMovieId(Integer movieId) {
         this.movieId = movieId;
     }
 
-    public String getName() {
-        return name;
+    public int getGanreId() {
+        return ganreId;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setGanreId(Integer ganreId) {
+        this.ganreId = ganreId;
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        MoviesEntityPK that = (MoviesEntityPK) o;
-        return movieId == that.movieId && Objects.equals(name, that.name);
+        MovieGanresEntityPK that = (MovieGanresEntityPK) o;
+        return movieId == that.movieId && ganreId == that.ganreId;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(movieId, name);
+        return Objects.hash(movieId, ganreId);
     }
 }
