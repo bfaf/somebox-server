@@ -19,6 +19,7 @@ import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
+import org.springframework.batch.core.step.skip.SkipPolicy;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemReader;
@@ -73,6 +74,10 @@ public class MovieMetadataImportBatchConfig {
                 .reader(metadataReader)
                 .processor(metadataProcessor)
                 .writer(metadataWriter)
+                .faultTolerant()
+                .skip(org.hibernate.exception.ConstraintViolationException.class)
+                .skipLimit(20)
+                .listener(new MovieMetadataItemWriteListener())
                 .build();
     }
 
@@ -131,7 +136,7 @@ public class MovieMetadataImportBatchConfig {
 
             Thread.sleep(2 * 1000);
             // movie.getFilename()
-            System.out.println(o.getRated());
+//            System.out.println(o.getRated());
 
             MoviesMetadataEntity m = new MoviesMetadataEntity();
             m.setMovieId(movie.getMovieId());

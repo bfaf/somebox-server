@@ -46,6 +46,10 @@ public class MovieImportBatchConfig {
                 .reader(reader)
                 .processor(processor)
                 .writer(writer)
+                .faultTolerant()
+                .skip(org.hibernate.exception.ConstraintViolationException.class)
+                .skipLimit(20)
+                .listener(new MovieItemWriteListener())
                 .build();
     }
 

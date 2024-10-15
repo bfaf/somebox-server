@@ -1,15 +1,18 @@
 package com.kchonov.someboxserver.models;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 
+import java.io.Serializable;
 import java.sql.Timestamp;
 import java.util.Date;
-import java.util.List;
 import java.util.Objects;
 
 @Entity
 @Table(name = "movies", schema = "public", catalog = "postgres")
-public class MoviesEntity {
+public class MoviesEntity implements Serializable {
 
     public MoviesEntity() {}
     public MoviesEntity(String name, String releaseYear, String filename) {
@@ -48,8 +51,8 @@ public class MoviesEntity {
     @Column(name = "updated_at")
     private Timestamp updatedAt;
 
-//    @OneToOne
-//    private MoviesMetadataEntity moviesMetadata;
+    @OneToOne(mappedBy = "moviesEntity", cascade = CascadeType.ALL)
+    private MoviesMetadataEntity moviesMetadata;
 
 //    @ManyToMany
 //    private List<MovieGanresEntity> movieGanres;
@@ -118,14 +121,14 @@ public class MoviesEntity {
         this.updatedAt = updatedAt;
     }
 
-//    public MoviesMetadataEntity getMoviesMetadataEntity() {
-//        return moviesMetadata;
-//    }
-//
-//    public void setMoviesMetadataEntity(MoviesMetadataEntity moviesMetadataEntity) {
-//        this.moviesMetadata = moviesMetadataEntity;
-//    }
-//
+    public MoviesMetadataEntity getMoviesMetadataEntity() {
+        return moviesMetadata;
+    }
+
+    public void setMoviesMetadataEntity(MoviesMetadataEntity moviesMetadataEntity) {
+        this.moviesMetadata = moviesMetadataEntity;
+    }
+
 //    public List<MovieGanresEntity> getMoviesGanres() {
 //        return movieGanres;
 //    }

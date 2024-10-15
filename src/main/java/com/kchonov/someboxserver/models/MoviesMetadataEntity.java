@@ -1,12 +1,15 @@
 package com.kchonov.someboxserver.models;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 
+import java.io.Serializable;
 import java.util.Objects;
 
 @Entity
 @Table(name = "movies_metadata", schema = "public", catalog = "postgres")
-public class MoviesMetadataEntity {
+public class MoviesMetadataEntity implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Id
     @Column(name = "movies_metadata_id")
@@ -50,6 +53,11 @@ public class MoviesMetadataEntity {
     @Basic
     @Column(name = "play_count")
     private Long playCount;
+
+    @OneToOne
+    @JoinColumn(name = "movie_id", nullable = false, insertable = false, updatable = false, unique = true)
+    @JsonBackReference
+    private MoviesEntity moviesEntity;
 
     public MoviesMetadataEntity() { }
 
@@ -179,6 +187,14 @@ public class MoviesMetadataEntity {
 
     public void setPlayCount(Long playCount) {
         this.playCount = playCount;
+    }
+
+    public MoviesEntity getMoviesEntity() {
+        return moviesEntity;
+    }
+
+    public void setMoviesEntity(MoviesEntity movie) {
+        this.moviesEntity = movie;
     }
 
     @Override
