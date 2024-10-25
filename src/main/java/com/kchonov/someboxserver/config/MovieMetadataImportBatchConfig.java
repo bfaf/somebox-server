@@ -1,11 +1,9 @@
 package com.kchonov.someboxserver.config;
 
 import com.google.gson.Gson;
-import com.kchonov.someboxserver.entities.SomeBoxFileInfo;
 import com.kchonov.someboxserver.models.MoviesEntity;
 import com.kchonov.someboxserver.models.MoviesMetadataEntity;
 import com.kchonov.someboxserver.repository.MoviesEntityRepository;
-import com.kchonov.someboxserver.services.FilesService;
 import jakarta.persistence.EntityManagerFactory;
 
 import java.awt.image.BufferedImage;
@@ -19,28 +17,17 @@ import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
-import org.springframework.batch.core.step.skip.SkipPolicy;
-import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemProcessor;
-import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.database.JdbcCursorItemReader;
 import org.springframework.batch.item.database.JpaItemWriter;
-import org.springframework.batch.item.support.CompositeItemProcessor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
-import org.springframework.http.converter.ByteArrayHttpMessageConverter;
 import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.util.SerializationUtils;
 import org.springframework.web.client.RestClient;
 
 import javax.imageio.ImageIO;
 import javax.sql.DataSource;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HexFormat;
-import java.util.List;
 
 import static org.springframework.http.MediaType.*;
 

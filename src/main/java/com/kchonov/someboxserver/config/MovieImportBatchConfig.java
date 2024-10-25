@@ -1,9 +1,12 @@
 package com.kchonov.someboxserver.config;
 
-import com.kchonov.someboxserver.entities.SomeBoxFileInfo;
 import com.kchonov.someboxserver.models.MoviesEntity;
+import com.kchonov.someboxserver.repository.MoviesEntityRepository;
 import com.kchonov.someboxserver.services.FilesService;
+import com.kchonov.someboxserver.utilities.FileUtilities;
 import jakarta.persistence.EntityManagerFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
@@ -19,18 +22,25 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Configuration
 @EnableBatchProcessing
 public class MovieImportBatchConfig {
 
-    private final FilesService fileService;
+    Logger logger = LoggerFactory.getLogger(MovieImportBatchConfig.class);
+
+    private final SomeBoxConfig someBoxConfig;
     private final EntityManagerFactory entityManagerFactory;
 
-    public MovieImportBatchConfig(FilesService fileService, EntityManagerFactory entityManagerFactory) {
-        this.fileService = fileService;
+    public MovieImportBatchConfig(SomeBoxConfig someBoxConfig, EntityManagerFactory entityManagerFactory) {
+        this.someBoxConfig = someBoxConfig;
         this.entityManagerFactory = entityManagerFactory;
     }
 
@@ -61,16 +71,27 @@ public class MovieImportBatchConfig {
                 .build();
     }
 
+    public List<String> listFiles() {
+        final Map<String, Boolean> FILE_FORMATS = Map.of(".mp4", true, ".mkv", true);
+        List<String> files = Stream.of(new File(someBoxConfig.sourceDir()).listFiles())
+                .filter(file -> !file.isDirectory())
+                .filter(file -> FILE_FORMATS.containsKey(FileUtilities.getExtension(file.getName())))
+                .map(File::getName)
+                .collect(Collectors.toList());
+
+        return files;
+    }
+
     @Bean
     public ItemReader<MoviesEntity> reader() {
-        List<SomeBoxFileInfo> files = this.fileService.listFiles();
+        List<String> files = this.listFiles();
         List<MoviesEntity> movies = new ArrayList<>();
-        for (SomeBoxFileInfo f : files) {
-            String[] parts = f.getFilename().split("-");
+        for (String f : files) {
+            String[] parts = f.split("-");
             movies.add(new MoviesEntity(
                     parts[0],
                     parts[1],
-                    f.getOriginalFilename()
+                    f
             ));
         }
 

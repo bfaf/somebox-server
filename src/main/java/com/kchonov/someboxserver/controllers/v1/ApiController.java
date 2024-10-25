@@ -1,9 +1,7 @@
 package com.kchonov.someboxserver.controllers.v1;
 
 import com.kchonov.someboxserver.config.SomeBoxConfig;
-import com.kchonov.someboxserver.entities.SomeBoxFileInfo;
 import com.kchonov.someboxserver.models.MoviesEntity;
-import com.kchonov.someboxserver.repository.MoviesEntityRepository;
 import com.kchonov.someboxserver.services.FilesService;
 import com.kchonov.someboxserver.services.MovieEntityService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -33,11 +31,6 @@ public class ApiController {
     }
 
     @GetMapping("/api/v1/list")
-    public List<SomeBoxFileInfo> listFiles() {
-        return filesService.listFiles();
-    }
-
-    @GetMapping("/api/v1/fetch")
     public List<MoviesEntity> fetchMovies() {
         return movieEntityService.getAllPublished();
     }
@@ -59,20 +52,19 @@ public class ApiController {
     @GetMapping(value = "/api/v1/play/{id}")
     public void playMediaV01(
             @PathVariable("id")
-            String filename,
+            Integer movieId,
             HttpServletResponse response,
             HttpServletRequest request)
     {
-        logger.info("Requested to play video: {}", filename);
         try {
-            filesService.streamFile(filename, request, response);
+            filesService.streamFile(movieId, request, response);
         } catch (Exception ex) {
             logger.error("Exception in API: ", ex);
         }
     }
 
     @GetMapping("/api/v1/image/{id}")
-    public ResponseEntity<byte[]> getImageAsResponseEntity(@PathVariable("id") String movieFilename) throws IOException {
-        return filesService.getImage(movieFilename);
+    public ResponseEntity<String> getImageAsResponseEntity(@PathVariable("id") Integer movieId) {
+        return filesService.getImage(movieId);
     }
 }
