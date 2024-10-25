@@ -1,4 +1,4 @@
-package com.kchonov.someboxserver.config;
+package com.kchonov.someboxserver.batch;
 
 import com.kchonov.someboxserver.models.MoviesEntity;
 import org.springframework.jdbc.core.RowMapper;

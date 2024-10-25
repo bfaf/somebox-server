@@ -1,4 +1,4 @@
-package com.kchonov.someboxserver.config;
+package com.kchonov.someboxserver.batch;
 
 import com.google.gson.Gson;
 import com.kchonov.someboxserver.models.MoviesEntity;
@@ -121,7 +121,7 @@ public class MovieMetadataImportBatchConfig {
                 cover = bb;
             }
 
-            Thread.sleep(2 * 1000);
+//            Thread.sleep(2 * 1000);
             // movie.getFilename()
 //            System.out.println(o.getRated());
 

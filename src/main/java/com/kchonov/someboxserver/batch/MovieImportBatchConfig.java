@@ -1,8 +1,7 @@
-package com.kchonov.someboxserver.config;
+package com.kchonov.someboxserver.batch;
 
+import com.kchonov.someboxserver.config.SomeBoxConfig;
 import com.kchonov.someboxserver.models.MoviesEntity;
-import com.kchonov.someboxserver.repository.MoviesEntityRepository;
-import com.kchonov.someboxserver.services.FilesService;
 import com.kchonov.someboxserver.utilities.FileUtilities;
 import jakarta.persistence.EntityManagerFactory;
 import org.slf4j.Logger;
@@ -23,7 +22,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -31,7 +29,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Configuration
-@EnableBatchProcessing
 public class MovieImportBatchConfig {
 
     Logger logger = LoggerFactory.getLogger(MovieImportBatchConfig.class);
