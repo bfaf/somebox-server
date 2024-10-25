@@ -1,124 +1,69 @@
 package com.kchonov.someboxserver.services;
 
 import com.kchonov.someboxserver.config.SomeBoxConfig;
-import com.kchonov.someboxserver.entities.BasicSomeBoxFileInfo;
-import com.kchonov.someboxserver.entities.SomeBoxFileInfo;
+import com.kchonov.someboxserver.exceptions.ImageNotFoundException;
 import com.kchonov.someboxserver.exceptions.VideoNotFoundException;
-import com.kchonov.someboxserver.utilities.FileUtilities;
+import com.kchonov.someboxserver.models.MoviesEntity;
+import com.kchonov.someboxserver.repository.MoviesEntityRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
-import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.Optional;
 
 @Service
 public class FilesService {
 
     Logger logger = LoggerFactory.getLogger(FilesService.class);
 
-    private final Map<String, Boolean> FILE_FORMATS = Map.of(".mp4", true, ".mkv", true);
-
     private final SomeBoxConfig someBoxConfig;
-    private final FileInfoService fileInfoService;
 
-    private List<SomeBoxFileInfo> fileInfoList;
-
-    private List<BasicSomeBoxFileInfo> basicList;
+    private final MoviesEntityRepository moviesRepository;
 
     private List<String> errorsToIgnore = List.of(
             "java.io.IOException: An established connection was aborted by the software in your host machine",
             "java.io.IOException: Connection reset by peer"
     );
 
-    public FilesService(SomeBoxConfig someBoxConfig, FileInfoService fileInfoService) {
+    public FilesService(SomeBoxConfig someBoxConfig, MoviesEntityRepository moviesRepository) {
         this.someBoxConfig = someBoxConfig;
-        this.fileInfoService = fileInfoService;
-        this.fileInfoList = listFiles();
-        this.basicList = listBasicFiles();
+        this.moviesRepository = moviesRepository;
     }
 
-    public List<SomeBoxFileInfo> listFiles() {
-        if (this.fileInfoList != null) {
-            return this.fileInfoList;
-        }
-        List<String> files = Stream.of(new File(someBoxConfig.sourceDir()).listFiles())
-                .filter(file -> !file.isDirectory())
-                .filter(file -> FILE_FORMATS.containsKey(FileUtilities.getExtension(file.getName())))
-                .map(File::getName)
-                .collect(Collectors.toList());
 
-        this.fileInfoList = files.stream().map(file -> fileInfoService.GetFileInfo(file)).collect(Collectors.toList());
-        for (int i = 0; i < this.fileInfoList.size(); i++) {
-            this.fileInfoList.get(i).setId(Long.valueOf(i));
+    /**
+     * Fetch Base64 encoded image from database
+     * @param movieId - movie to be found in DB
+     * @return Returns Base64 encoded image
+     * @throws ImageNotFoundException when movie is not found
+     */
+    public ResponseEntity<String> getImage(Integer movieId) {
+       Optional<MoviesEntity> movie = moviesRepository.findByMovieId(movieId);
+        if (!movie.isPresent()) {
+            logger.error(String.format("Cannot find image for movie with id %d", movieId));
+            throw new ImageNotFoundException("Cannot find image for the given movie");
         }
 
-        return this.fileInfoList;
+        return new ResponseEntity<>(movie.get().getMoviesMetadataEntity().getPoster(), HttpStatus.OK);
     }
 
-    public List<BasicSomeBoxFileInfo> listBasicFiles() {
-        List<String> files = Stream.of(new File(someBoxConfig.sourceDir()).listFiles())
-                .filter(file -> !file.isDirectory())
-                .filter(file -> FILE_FORMATS.containsKey(FileUtilities.getExtension(file.getName())))
-                .map(File::getName)
-                .collect(Collectors.toList());
-
-        List<BasicSomeBoxFileInfo> basicList = files.stream().map(file -> new BasicSomeBoxFileInfo(0L, file)).collect(Collectors.toList());
-        for (int i = 0; i < basicList.size(); i++) {
-            basicList.get(i).setId(Long.valueOf(i));
+    public void streamFile(Integer movieId, HttpServletRequest request, HttpServletResponse response) throws Exception {
+        Optional<MoviesEntity> movie = moviesRepository.findByMovieId(movieId);
+        if (!movie.isPresent()) {
+            logger.error(String.format("Cannot find movie with id %d", movieId));
+            throw new VideoNotFoundException("Cannot find movie with given id");
         }
-
-        return basicList;
-    }
-
-    public ResponseEntity<byte[]> getImage(String movieFilename) throws IOException {
-//        logger.info("Fetching image: " + movieFilename);
-        if (this.fileInfoList == null) {
-            listFiles();
-        }
-        List<SomeBoxFileInfo> filenameList = this.fileInfoList.stream().filter(f -> f.getFilename().compareTo(movieFilename) == 0
-        ).collect(Collectors.toList());
-//        logger.info("Images matching: " + filenameList.size());
-        if (filenameList.size() == 0) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Cannot find requested video");
-        }
-
-        Path path = Paths.get(someBoxConfig.screenshotDir(), filenameList.get(0).getScreenshotName());
-//        logger.info("Fetching image: " + path.getFileName());
-        HttpHeaders headers = new HttpHeaders();
-        headers.add("Content-Type", MediaType.IMAGE_PNG_VALUE);
-        InputStream initialStream = new FileInputStream(new File(path.toString()));
-        byte[] media = IOUtils.toByteArray(initialStream);
-        headers.setCacheControl(CacheControl.noCache().getHeaderValue());
-
-        ResponseEntity<byte[]> responseEntity = new ResponseEntity<>(media, headers, HttpStatus.OK);
-        return responseEntity;
-    }
-
-    public void streamFile(String filename, HttpServletRequest request, HttpServletResponse response) throws Exception {
-        if (this.fileInfoList == null) {
-            listFiles();
-        }
-        // Minions 2015 720p BDRip x264 DUAL-SLS
-        List<SomeBoxFileInfo> filenameList = this.fileInfoList.stream().filter(f -> f.getFilename().compareTo(filename) == 0).collect(Collectors.toList());
-        if (filenameList.size() == 0) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Cannot find requested video");
-        }
-        Path path = Paths.get(someBoxConfig.sourceDir(), filenameList.get(0).getOriginalFilename());
-        logger.info("path to file: {}", path.toString());
+        Path path = Paths.get(someBoxConfig.sourceDir(), movie.get().getFilename());
+//        logger.info("path to file: {}", path.toString());
         String filePathString = path.toString();
         final String mimeType = Files.probeContentType(path);
         final File movieFIle = new File(filePathString);
