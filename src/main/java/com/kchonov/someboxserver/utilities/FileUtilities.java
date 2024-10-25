@@ -80,7 +80,4 @@ public class FileUtilities {
         }
     }
 
-    public static boolean hasScreenshot(String pathToFile) {
-        return new File(pathToFile).exists();
-    }
 }
