@@ -1,4 +1,4 @@
-package com.kchonov.someboxserver.config;
+package com.kchonov.someboxserver.batch;
 
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobParameters;

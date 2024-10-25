@@ -1,0 +1,37 @@
+services:
+  db:
+    image: postgres:16.4
+    container_name: postgres
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: mysecretpassword
+#      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+  keycloak_db:
+    image: postgres:16.4
+    container_name: keycloak_db
+    restart: always
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: keycloakpassword
+    ports:
+      - "5433:5432"
+  keycloak:
+    image: bitnami/keycloak:latest
+    container_name: keycloak
+    restart: always
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: mysecretpassword
+      DB_VENDOR: POSTGRES
+      DB_ADDR: keycloak_db
+      DB_PORT: 5432
+      DB_DATABASE: keycloak
+      DB_USER: keycloak
+      DB_PASSWORD: keycloakpassword
+    ports:
+      - "8180:8080"
+    depends_on:
+      - keycloak_db

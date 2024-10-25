@@ -4,14 +4,17 @@ import com.kchonov.someboxserver.config.SomeBoxConfig;
 import com.kchonov.someboxserver.models.MoviesEntity;
 import com.kchonov.someboxserver.services.FilesService;
 import com.kchonov.someboxserver.services.MovieEntityService;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
+import org.springframework.security.access.prepost.PostAuthorize;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.*;
 import java.util.List;
 
 @RestController
@@ -34,20 +37,6 @@ public class ApiController {
     public List<MoviesEntity> fetchMovies() {
         return movieEntityService.getAllPublished();
     }
-
-    /*
-    @GetMapping(value = "/api/v1/play/{id}")
-    @ResponseBody
-    public ResponseEntity<StreamingResponseBody> playMediaV01(
-            @PathVariable("id")
-            Integer videoId,
-            @RequestHeader(value = "Range", required = false)
-            String rangeHeader,
-            HttpServletResponse response)
-    {
-        return filesService.streamFile(videoId, rangeHeader, response);
-    }
-     */
 
     @GetMapping(value = "/api/v1/play/{id}")
     public void playMediaV01(
