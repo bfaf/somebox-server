@@ -1,4 +1,4 @@
-package com.kchonov.someboxserver.config;
+package com.kchonov.someboxserver.batch;
 
 import java.util.Objects;
 

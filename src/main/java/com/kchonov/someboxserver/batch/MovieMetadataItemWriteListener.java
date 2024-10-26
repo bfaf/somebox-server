@@ -1,4 +1,4 @@
-package com.kchonov.someboxserver.config;
+package com.kchonov.someboxserver.batch;
 
 import com.kchonov.someboxserver.models.MoviesMetadataEntity;
 import org.slf4j.Logger;
